@@ -2,12 +2,7 @@
 //  processes.cpp
 //  CSS430
 //
-//  This programs is used for an eduactaional purpose. It uses pipe and fork to read
-//  and write command-line command which work as same as $ ps -A | grep argv[1] | wc -l
-//
-//  Created by Chengtian Deng on 4/14/19.
-//  Copyright © 2019 Chengtian Deng. All rights reserved.
-//
+
 
 #include <stdio.h>
 #include <stdlib.h>     //exit
