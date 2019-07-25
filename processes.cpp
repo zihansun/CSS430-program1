@@ -44,8 +44,8 @@ int main(int arg, char *argv[]){
                 close(pipeFD1[1]); // close FD1 WRITE
                 close(pipeFD2[1]); // close FD2 WRITE
                 dup2(pipeFD2[1],1); // READ to FD2
-                execlp("wc", "wc", "-l", (char*)0);
-                if(check == 01){
+                int check = execlp("wc", "wc", "-l", (char*)0);
+                if(check == -1){
                     perror("Error on executig command ");
                     exit(EXIT_FAILURE);
                 }
@@ -70,7 +70,7 @@ int main(int arg, char *argv[]){
             close(pipeFD2[1]);
             wait(NULL);
             // int check = execlp("wc","wc","-l",(char*)0);
-            execlp("ps","ps","-A",(char*)0);
+            int check = execlp("ps","ps","-A",(char*)0);
             if(check == -1){
                 perror("Error on executing command");
                 exit(EXIT_FAILURE);
