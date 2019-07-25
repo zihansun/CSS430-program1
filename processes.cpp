@@ -1,3 +1,14 @@
+//
+//  processes.cpp
+//  CSS430
+//
+//  This programs is used for an eduactaional purpose. It uses pipe and fork to read
+//  and write command-line command which work as same as $ ps -A | grep argv[1] | wc -l
+//
+//  Created by Chengtian Deng on 4/14/19.
+//  Copyright © 2019 Chengtian Deng. All rights reserved.
+//
+
 #include <stdio.h>
 #include <stdlib.h>     //exit
 #include <unistd.h>     //fork, pipe
@@ -5,81 +16,91 @@
 #include <iostream>
 using namespace std;
 
-int main(int arg, char *argv[]){
-    // enum {0, 1}; // user "0" and "1" instead of nurmerical number 
-    pid_t pid1, pid2, pid3; // init pid
-    int pipeFD1[2],pipeFD2[2];  // init two file descripter
+int main(int argc, char** argv)
+{
+    enum {READ, WRITE};
+    pid_t pid1, pid2, pid3;
+    int pipeFD1[2],pipeFD2[2];
     
-    // check if pipes are created ok
-    if(pipe(pipeFD1)<0 || pipe(pipeFD2)<0){
-        perror("Error in creating pipe");
+    //check if one argument is provided
+    if(argc < 2)
+    {
+        perror("Error in Argument: required 1");
         exit(EXIT_FAILURE);
     }
-
-    // check for argument 
-    if(arg < 2){ 
-        perror("An argument is expected");
+    
+    //check if the pipe is correctly created
+    if (pipe(pipeFD1) < 0)
+    {
+        perror("Error in creating pipe 1");
         exit(EXIT_FAILURE);
     }
-
-    pid1 = fork();  // create fork process
-    if(pid1 < 0){
-        perror("Error during fork");      
+    if (pipe(pipeFD2) < 0)
+    {
+        perror("Error in creating pipe 2");
         exit(EXIT_FAILURE);
-    }   
-    if(pid1 == 0){   // child 
+    }
+    
+    //creating the fork process
+    pid1 = fork();
+    //check if the fold process is good
+    if (pid1 < 0)
+    {
+        perror("Error during the first fork");
+        exit(EXIT_FAILURE);
+    }
+    
+    if (pid1 == 0)  //Child1
+    {
+        //creating the fork process
         pid2 = fork();
-        if(pid2 < 0){
-            perror("Error during fork");      
+        if (pid2 < 0)
+        {
+            perror("Error during the second fork");
             exit(EXIT_FAILURE);
         }
-        if(pid2 == 0){
+        else if (pid2 == 0)//Child2
+        {
+            //creating the fork process
             pid3 = fork();
-            if(pid3 < 0){
-                perror("Error during fork");
+            if (pid3 < 0)
+            {
+                perror("Error during the third fork");
                 exit(EXIT_FAILURE);
             }
-            if(pid3 == 0){
-                close(pipeFD1[0]);  // close FD1 READ
-                close(pipeFD1[1]); // close FD1 WRITE
-                close(pipeFD2[1]); // close FD2 WRITE
-                dup2(pipeFD2[1],1); // READ to FD2
-                int check = execlp("wc", "wc", "-l", (char*)0);
-                if(check == -1){
-                    perror("Error on executig command ");
-                    exit(EXIT_FAILURE);
-                }
+            else if (pid3 == 0)// child3
+            {
+                //child3
+                close(pipeFD1[WRITE]);
+                close(pipeFD2[WRITE]);
+                close(pipeFD1[READ]);
+                dup2(pipeFD2[READ], 0);
+                execlp("wc", "wc", "-l", NULL);
             }
-            else{
-                close(pipeFD1[1]);
-                dup2(pipeFD1[0],0); // open read for FD1
-                close(pipeFD2[0]);  
-                dup2(pipeFD2[1],1); // open write for FD2
-                wait(NULL);
-                int check = execlp("greap","greap",argv[1],(char*)0);
-                if(check == -1){
-                    perror("Error on executing command");
-                    exit(EXIT_FAILURE);
-                }
+            else
+            {
+                //child2
+                close(pipeFD1[WRITE]);
+                dup2(pipeFD2[WRITE],1);
+                dup2(pipeFD1[READ],0);
+                close(pipeFD2[READ]);
+                execlp("grep", "grep", argv[1], NULL);
             }
         }
-        else{
-            dup2(pipeFD1[1],1);
-            close(pipeFD1[0]);
-            close(pipeFD2[0]);
-            close(pipeFD2[1]);
-            wait(NULL);
-            // int check = execlp("wc","wc","-l",(char*)0);
-            int check = execlp("ps","ps","-A",(char*)0);
-            if(check == -1){
-                perror("Error on executing command");
-                exit(EXIT_FAILURE);
-            }
+        else
+        {
+        //child1
+        dup2(pipeFD1[WRITE],1);
+        close(pipeFD2[WRITE]);
+        close(pipeFD1[READ]);
+        close(pipeFD2[READ]);
+        execlp("ps", "ps", "-A", NULL);
         }
-        
     }
-    else{
+    else
+    {
+        //parent
         wait(NULL);
     }
-return 0;
+    exit(EXIT_SUCCESS);
 }
