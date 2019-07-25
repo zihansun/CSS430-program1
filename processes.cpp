@@ -38,11 +38,16 @@ int main(int arg, char *argv[]){
                 exit(EXIT_FAILURE);
             }
             if(pid == 0){
-                close(pipeFD1[0]);  // close FD1 0
-                close(pipeFD1[1]); // close FD1 1
-                close(pipeFD2[0]); // close FD2 0
-                dup2(pipeFD2[1],1); // 1 to pipe
-                int check = execlp("ps","ps","-A",(char*)0);
+                // close(pipeFD1[0]);  // close FD1 READ
+                // close(pipeFD1[1]); // close FD1 WRITE
+                // close(pipeFD2[0]); // close FD2 READ
+                // dup2(pipeFD2[1],1); // write to pipe
+                // int check = execlp("ps","ps","-A",(char*)0);
+                close(pipeFD1[0]);  // close FD1 READ
+                close(pipeFD1[1]); // close FD1 WRITE
+                close(pipeFD2[1]); // close FD2 WRITE
+                dup2(pipeFD2[1],1); // READ to FD2
+                execlp("wc", "wc", "-l", (char*)0);
                 if(check == 01){
                     perror("Error on executig command ");
                     exit(EXIT_FAILURE);
@@ -50,9 +55,9 @@ int main(int arg, char *argv[]){
             }
             else{
                 close(pipeFD1[1]);
-                dup2(pipeFD1[0],0);
-                close(pipeFD2[0]);
-                dup2(pipeFD2[1],1);
+                dup2(pipeFD1[0],0); // open read for FD1
+                close(pipeFD2[0]);  
+                dup2(pipeFD2[1],1); // open write for FD2
                 wait(NULL);
                 int check = execlp("greap","greap",argv[1],(char*)0);
                 if(check == -1){
@@ -62,12 +67,13 @@ int main(int arg, char *argv[]){
             }
         }
         else{
+            dup2(pipeFD1[1],1);
             close(pipeFD1[0]);
-            close(pipeFD1[1]);
+            close(pipeFD2[0]);
             close(pipeFD2[1]);
-            dup2(pipeFD2[0],0);
             wait(NULL);
-            int check = execlp("wc","wc","-l",(char*)0);
+            // int check = execlp("wc","wc","-l",(char*)0);
+            execlp("ps","ps","-A",(char*)0);
             if(check == -1){
                 perror("Error on executing command");
                 exit(EXIT_FAILURE);
