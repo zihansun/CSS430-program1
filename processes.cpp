@@ -7,7 +7,7 @@ using namespace std;
 
 int main(int arg, char *argv[]){
     // enum {0, 1}; // user "0" and "1" instead of nurmerical number 
-    pid_t pid; // init pid
+    pid_t pid1, pid2, pid3; // init pid
     int pipeFD1[2],pipeFD2[2];  // init two file descripter
     
     // check if pipes are created ok
@@ -22,27 +22,24 @@ int main(int arg, char *argv[]){
         exit(EXIT_FAILURE);
     }
 
-    pid = fork();  // create fork process
-    if(pid < 0){
+    pid1 = fork();  // create fork process
+    if(pid1 < 0){
         perror("Error during fork");      
         exit(EXIT_FAILURE);
     }   
-    if(pid == 0){   // child 
-        if(pid < 0){
+    if(pid1 == 0){   // child 
+        pid2 = fork();
+        if(pid2 < 0){
             perror("Error during fork");      
             exit(EXIT_FAILURE);
         }
-        if(pid == 0){
-            if(pid < 0){
+        if(pid2 == 0){
+            pid3 = fork();
+            if(pid3 < 0){
                 perror("Error during fork");
                 exit(EXIT_FAILURE);
             }
-            if(pid == 0){
-                // close(pipeFD1[0]);  // close FD1 READ
-                // close(pipeFD1[1]); // close FD1 WRITE
-                // close(pipeFD2[0]); // close FD2 READ
-                // dup2(pipeFD2[1],1); // write to pipe
-                // int check = execlp("ps","ps","-A",(char*)0);
+            if(pid3 == 0){
                 close(pipeFD1[0]);  // close FD1 READ
                 close(pipeFD1[1]); // close FD1 WRITE
                 close(pipeFD2[1]); // close FD2 WRITE
